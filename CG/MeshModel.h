@@ -1,13 +1,8 @@
 #pragma once
 // Definitions in meshmodel.cpp
-extern float objSpinX, objSpinY, objSpinZ;
-extern float objScale;
-extern float objTransX, objTransY, objTransZ;
-
-extern float worldSpinX, worldSpinY, worldSpinZ;
-extern float worldScale;
-extern float worldTransX, worldTransY, worldTransZ;
-
+extern float spinX, spinY, spinZ;
+extern float scale;
+extern float transX, transY, transZ;
 #pragma once
 
 #include <vector>
@@ -17,6 +12,8 @@ extern float worldTransX, worldTransY, worldTransZ;
 
 #include "Obj Parser/wavefront_obj.h"
 #include "HW1.h"
+#include "Transform.h"
+
 #include <set>
 #include <tuple>
 
@@ -24,6 +21,8 @@ extern float worldTransX, worldTransY, worldTransZ;
 class MeshModel {
 private:
     Wavefront_obj meshData; // Stores mesh data
+    Transform transform;
+
     glm::mat4 objectMatrix;
     glm::mat4 worldMatrix;
     std::vector<glm::vec4> coordinates; // center, unit x, unit y, unit z
@@ -60,12 +59,18 @@ public:
     void renderNormals(std::vector<glm::vec2> screenNormals, std::vector<glm::vec2> screenPoints);
     void renderBB(std::vector<glm::vec2> screenBB);
 
+
+    //old translations functions
     void objectRotation(float sx, float sy, float sz);
     void objectScaling(float a);
 
     void translation(float tx, float ty, float tz);
     void worldRotation(float sx, float sy, float sz);
     void worldScaling(float a);
+    //new translation functions
+    void applyObjectTransformations(float sx, float sy, float sz, float factor, float tx, float ty, float tz);
+    void applyWorldTransformations(float sx, float sy, float sz, float factor, float tx, float ty, float tz);
+
 
     void applyViewMatrix(float cx, float cy, float cz);
     void lookAtObject(float cx, float cy, float cz);

@@ -142,13 +142,13 @@ int main(int argc, char* argv[])
 	TwAddButton(bar, "open", loadOBJModel, NULL, " label='Open OBJ File...' ");
 
 	// Add transformations group
-	TwAddVarRW(bar, "Rotation X", TW_TYPE_FLOAT, &objSpinX, " min=-360 max=360 step=1 group='Transformations' label='Rotation X' ");
-	TwAddVarRW(bar, "Rotation Y", TW_TYPE_FLOAT, &objSpinY, " min=-360 max=360 step=1 group='Transformations' label='Rotation Y' ");
-	TwAddVarRW(bar, "Rotation Z", TW_TYPE_FLOAT, &objSpinZ, " min=-360 max=360 step=1 group='Transformations' label='Rotation Z' ");
-	TwAddVarRW(bar, "Scale", TW_TYPE_FLOAT, &objScale, " min=0.1 max=10.0 step=0.1 group='Transformations' label='Scale' ");
-	TwAddVarRW(bar, "Translation X", TW_TYPE_FLOAT, &objTransX, " min=-5 max=5 step=0.1 group='Transformations' label='Translation X' ");
-	TwAddVarRW(bar, "Translation Y", TW_TYPE_FLOAT, &objTransY, " min=-5 max=5 step=0.1 group='Transformations' label='Translation Y' ");
-	TwAddVarRW(bar, "Translation Z", TW_TYPE_FLOAT, &objTransZ, " min=-5 max=5 step=0.1 group='Transformations' label='Translation Z' ");
+	TwAddVarRW(bar, "Rotation X", TW_TYPE_FLOAT, &spinX, " min=-360 max=360 step=1 group='Transformations' label='Rotation X' ");
+	TwAddVarRW(bar, "Rotation Y", TW_TYPE_FLOAT, &spinY, " min=-360 max=360 step=1 group='Transformations' label='Rotation Y' ");
+	TwAddVarRW(bar, "Rotation Z", TW_TYPE_FLOAT, &spinZ, " min=-360 max=360 step=1 group='Transformations' label='Rotation Z' ");
+	TwAddVarRW(bar, "Scale", TW_TYPE_FLOAT, &scale, " min=0.1 max=10.0 step=0.1 group='Transformations' label='Scale' ");
+	TwAddVarRW(bar, "Translation X", TW_TYPE_FLOAT, &transX, " min=-5 max=5 step=0.1 group='Transformations' label='Translation X' ");
+	TwAddVarRW(bar, "Translation Y", TW_TYPE_FLOAT, &transY, " min=-5 max=5 step=0.1 group='Transformations' label='Translation Y' ");
+	TwAddVarRW(bar, "Translation Z", TW_TYPE_FLOAT, &transZ, " min=-5 max=5 step=0.1 group='Transformations' label='Translation Z' ");
 
 	//camera translations
 	TwAddVarRW(bar, "camera Translation X", TW_TYPE_FLOAT, &dcamera_x, " min=-5 max=5 step=0.1 group='Transformations' label='camera Translation X' ");
@@ -294,15 +294,24 @@ void ApplyTransformations() {
 	if (isObjectCoords) {
 		// Apply transformations in object coordinates
 		//myMesh->objectTranslation(objTransX, objTransY, objTransZ);
-		myMesh->translation(objTransX, objTransY, objTransZ);
-		myMesh->objectRotation(objSpinX, objSpinY, objSpinZ);
-		myMesh->objectScaling(objScale);
+		
+		//old transformations
+		//myMesh->translation(transX, transY, transZ);
+		//myMesh->objectRotation(spinX, spinY, spinZ);
+		//myMesh->objectScaling(scale);
+
+		//new transformations
+		myMesh->applyObjectTransformations(spinX, spinY, spinZ, scale, transX, transY, transZ);
 	}
 	else {
 		// Apply transformations in world coordinates
-		myMesh->translation(objTransX, objTransY, objTransZ);
-		myMesh->worldRotation(objSpinX, objSpinY, objSpinZ);
-		myMesh->worldScaling(objScale);
+
+		//old transformations
+		//myMesh->translation(transX, transY, transZ);
+		//myMesh->worldRotation(spinX, spinY, spinZ);
+		//myMesh->worldScaling(scale);
+
+		myMesh->applyWorldTransformations(spinX, spinY, spinZ, scale, transX, transY, transZ);
 	}
 	camera_x += dcamera_x;
 	camera_y += dcamera_y;

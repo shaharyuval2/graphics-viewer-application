@@ -6,17 +6,15 @@
 
 const float PI = 3.141592653589793;
 // Definitions in meshmodel.cpp
-float objSpinX = 0.0f, objSpinY = 0.0f, objSpinZ = 0.0f;
-float objScale = 1.0f;
-float objTransX = 0.0f, objTransY = 0.0f, objTransZ = 0.0f;
-
-float worldSpinX = 0.0f, worldSpinY = 0.0f, worldSpinZ = 0.0f;
-float worldScale = 0.0f;
-float worldTransX = 0.0f, worldTransY = 0.0f, worldTransZ = -30.0f;
+float spinX = 0.0f, spinY = 0.0f, spinZ = 0.0f;
+float scale = 1.0f;
+float transX = 0.0f, transY = 0.0f, transZ = 0.0f;
 
 
 // Constructor: Loads the OBJ file and canonicalizes the coordinates
 MeshModel::MeshModel(std::wstring filename, float width, float height) {
+
+    transform = Transform();
 
     //initialize to I
     objectMatrix = glm::mat4(1.0f); 
@@ -123,7 +121,7 @@ void MeshModel::canonicalize() {
     }
 
 
-    translation(0, 0, -20);
+    transform.objectTranslate(0, 0, -20);
     
 }
 
@@ -195,6 +193,8 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float n, float f,
     );
 
     //calculate the total matrix
+    objectMatrix = transform.getObjectTransformationMatrix();
+    worldMatrix = transform.getWorldTransformationMatrix();
     totalMatrix = projectionMatrix * (viewMatrix * (worldMatrix * objectMatrix));
     glm::mat4 untilWorldMatrix = worldMatrix * objectMatrix;
 
@@ -240,143 +240,6 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float n, float f,
     }
     objectCentroid = worldBB[8];
 
-
-    /*
-    //apply object matrix
-    std::vector<glm::vec4> objectPoints;
-    objectPoints.reserve(meshData.m_points.size());
-    for (const auto& vec : meshData.m_points) {
-        objectPoints.push_back(objectMatrix * vec);
-    }
-    std::vector<glm::vec4> objectNormals;
-    objectNormals.reserve(movedNormals.size());
-    for (const auto& vec : movedNormals) {
-        objectNormals.push_back(objectMatrix * vec);
-    }
-    std::vector<glm::vec4> objectBB;
-    for (const auto& vec : BB) {
-        objectBB.push_back(objectMatrix * vec);
-    }
-    std::vector<glm::vec4> objectCoordinates;
-    for (const auto& vec : coordinates) {
-        objectCoordinates.push_back(objectMatrix * vec);
-    }
-
-
-    //apply world matrix
-    std::vector<glm::vec4> worldPoints;
-    worldPoints.reserve(meshData.m_points.size());
-    for (const auto& vec : objectPoints) {
-        worldPoints.push_back(worldMatrix * vec);
-    }
-    std::vector<glm::vec4> worldNormals;
-    objectNormals.reserve(meshData.m_normals.size());
-    for (const auto& vec : objectNormals) {
-        worldNormals.push_back(worldMatrix * vec);
-    }
-    std::vector<glm::vec4> worldCoordinates;
-    for (const auto& vec : objectCoordinates) {
-        worldCoordinates.push_back(worldMatrix * vec);
-    }
-    std::vector<glm::vec4> worldBB;
-    for (const auto& vec : objectBB) {
-        worldBB.push_back(worldMatrix * vec);
-    }
-
-    //apply viewing matrix
-    std::vector<glm::vec4> viewPoints;
-    viewPoints.reserve(meshData.m_points.size());
-    for (const auto& vec : worldPoints) {
-        viewPoints.push_back(viewMatrix * vec);
-    }
-    std::vector<glm::vec4> viewNormals;
-    viewNormals.reserve(meshData.m_normals.size());
-    for (const auto& vec : worldNormals) {
-        viewNormals.push_back(viewMatrix * vec);
-    }
-    std::vector<glm::vec4> viewCoordinates;
-    for (const auto& vec : worldCoordinates) {
-        viewCoordinates.push_back(viewMatrix * vec);
-    }
-    std::vector<glm::vec4> viewBB;
-    for (const auto& vec : worldBB) {
-        viewBB.push_back(viewMatrix * vec);
-    }
-
-    //build projection matrix
-    const float m00 = n / r;
-    const float m11 = n / t;
-    const float m22 = -(f + n) / (f - n);
-    const float m43 = -(2 * f * n) / (f - n);
-
-    const glm::mat4 projectionMatrix = glm::mat4(
-        m00, 0, 0, 0,
-        0, m11, 0, 0,
-        0, 0, m22, -1,
-        0, 0, m43, 0
-    );
-
-
-    //project
-    std::vector<glm::vec4> screenPoints;
-    screenPoints.reserve(viewPoints.size());
-    for (const auto& vec : viewPoints) {
-        glm::vec4 v4 = projectionMatrix * vec;
-        v4 /= v4.w;
-        screenPoints.emplace_back(glm::vec4(v4.x, v4.y, 0, 1));
-    }
-
-    std::vector<glm::vec4> screenCoordinates;
-    for (const auto& vec : viewCoordinates) {
-        glm::vec4 v4 = projectionMatrix * vec;
-        v4 /= v4.w;
-        screenCoordinates.emplace_back(glm::vec4(v4.x, v4.y, 0, 1));
-    }
-
-    std::vector<glm::vec4> screenNormals;
-    screenNormals.reserve(viewNormals.size());
-    for (const auto& vec : viewNormals) {
-        glm::vec4 v4 = projectionMatrix * vec;
-        v4 /= v4.w;
-        screenNormals.emplace_back(glm::vec4(v4.x, v4.y, 0, 1));
-    }
-
-    std::vector<glm::vec4> screenBB;
-    for (const auto& vec : viewBB) {
-        glm::vec4 v4 = projectionMatrix * vec;
-        v4 /= v4.w;
-        screenBB.emplace_back(glm::vec4(v4.x, v4.y, 0, 1));
-    }
-
-
-    // Scale to screen size
-    std::vector<glm::vec2> finalScreenPoints;
-    finalScreenPoints.reserve(screenPoints.size());
-    for (auto& vec : screenPoints) {
-        glm::vec4 v4 = viewportMatrix * vec;
-        finalScreenPoints.push_back(glm::vec2(v4.x,v4.y));
-    }
-
-    std::vector<glm::vec2> finalScreenCoordinates;
-    for (auto& vec : screenCoordinates) {
-        glm::vec4 v4 = viewportMatrix * vec;
-        finalScreenCoordinates.push_back(glm::vec2(v4.x, v4.y));
-    }
-
-    std::vector<glm::vec2> finalScreenNormals;
-    finalScreenNormals.reserve(screenNormals.size());
-    for (auto& vec : screenNormals) {
-        glm::vec4 v4 = viewportMatrix * vec;
-        finalScreenNormals.push_back(glm::vec2(v4.x, v4.y));
-    }
-
-    // Scale to screen size
-    std::vector<glm::vec2> finalScreenBB;
-    for (auto& vec : screenBB) {
-        glm::vec4 v4 = viewportMatrix * vec;
-        finalScreenBB.push_back(glm::vec2(v4.x, v4.y));
-    }
-    */
 
     return { finalScreenPoints, finalScreenCoordinates, finalScreenNormals, finalScreenBB };
 }
@@ -484,7 +347,7 @@ void MeshModel::renderBB(std::vector<glm::vec2> screenBB) {
     Color = 0xffffffff; // return to white
 }
 
-
+//old transformation functions
 void MeshModel::objectRotation(float sx, float sy, float sz) {
     // X rotation matrix
     float cosx = std::cos(PI * sx/180);
@@ -508,7 +371,7 @@ void MeshModel::objectRotation(float sx, float sy, float sz) {
         0, 0, 0, 1
     );
 
-    // Y rotation matrix
+    // Z rotation matrix
     float cosz = std::cos(PI * sz/180);
     float sinz = std::sin(PI * sz/180);
 
@@ -588,6 +451,18 @@ void MeshModel::worldScaling(float a) {
     );
 
     worldMatrix = S * worldMatrix;
+}
+
+void MeshModel::applyObjectTransformations(float sx, float sy, float sz, float factor, float tx, float ty, float tz) {
+    transform.objectRotate(sx, sy, sz);
+    transform.objectScale(factor);
+    transform.objectTranslate(tx, ty, tz);
+}
+
+void MeshModel::applyWorldTransformations(float sx, float sy, float sz, float factor, float tx, float ty, float tz) {
+    transform.worldRotate(sx, sy, sz);
+    transform.worldScale(factor);
+    transform.worldTranslate(tx, ty, tz);
 }
 
 void MeshModel::applyViewMatrix(float cx, float cy, float cz) {

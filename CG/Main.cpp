@@ -293,13 +293,14 @@ void drawScene()
 void ApplyTransformations() {
 	if (isObjectCoords) {
 		// Apply transformations in object coordinates
-		myMesh->objectTranslation(objTransX, objTransY, objTransZ);
+		//myMesh->objectTranslation(objTransX, objTransY, objTransZ);
+		myMesh->translation(objTransX, objTransY, objTransZ);
 		myMesh->objectRotation(objSpinX, objSpinY, objSpinZ);
 		myMesh->objectScaling(objScale);
 	}
 	else {
 		// Apply transformations in world coordinates
-		myMesh->worldTranslation(objTransX, objTransY, objTransZ);
+		myMesh->translation(objTransX, objTransY, objTransZ);
 		myMesh->worldRotation(objSpinX, objSpinY, objSpinZ);
 		myMesh->worldScaling(objScale);
 	}
@@ -358,42 +359,12 @@ void Display()
 // Callback function called by GLUT when window size changes
 void Reshape(int width, int height)
 {
-	if (width <= 0 || height <= 0) {
-		return; // Prevent invalid window sizes
-	}
-	// Define the target aspect ratio (e.g., 16:9 or any desired aspect ratio)
-	float windowAspect = static_cast<float>(width) / static_cast<float>(height);
-
-	int viewportX = 0, viewportY = 0;
-	int viewportWidth = width, viewportHeight = height;
-
-	// Adjust viewport to maintain aspect ratio
-	if (windowAspect > targetAspect) {
-		// Window is wider than target aspect ratio
-		viewportWidth = static_cast<int>(height * targetAspect);
-		viewportX = (width - viewportWidth) / 2; // Center horizontally
-	}
-	else if (windowAspect < targetAspect) {
-		// Window is taller than target aspect ratio
-		viewportHeight = static_cast<int>(width / targetAspect);
-		viewportY = (height - viewportHeight) / 2; // Center vertically
-	}
-
-	// Set the OpenGL viewport with letterboxing
-	glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
-	// Update AntTweakBar with the new window size
+	glUseScreenCoordinates(width,height);
 	TwWindowSize(width, height);
-
-	// Symmetrical letterboxing: Ensure offsets are applied evenly
-	if (viewportX < 0) viewportX = 0;
-	if (viewportY < 0) viewportY = 0;
-
-	// Update your custom viewport logic
-	glUseScreenCoordinates(viewportWidth, viewportHeight);
 
 	// Update the viewport-related transformations in the MeshModel
 	if (myMesh) {
-		myMesh->updateViewPort(static_cast<float>(viewportWidth), static_cast<float>(viewportHeight), viewportX, viewportY);
+		myMesh->updateViewPort(width, height);
 	}
 	// Request a redisplay to apply changes
 	glutPostRedisplay();

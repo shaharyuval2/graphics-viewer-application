@@ -21,13 +21,13 @@ MeshModel::MeshModel(std::wstring filename, float width, float height) {
     //initialize to I
     objectMatrix = glm::mat4(1.0f); 
     worldMatrix = glm::mat4(1.0f); 
-    onlyRotateObjectMatrix = glm::mat4(1.0f); 
     viewMatrix = glm::mat4(1.0f);
     translationViewMatrix = glm::mat4(1.0f);
     rotationViewMatrix = glm::mat4(1.0f);
     
     //initialize viewport matrix
-    updateViewPort(width, height,0,0);
+    targetAspect = width / height;
+    updateViewPort(width, height);
 
     //initialize coordinates
     coordinates.push_back(glm::vec4(0, 0, 0, 1));
@@ -123,7 +123,7 @@ void MeshModel::canonicalize() {
     }
 
 
-    worldTranslation(0, 0, -20);
+    translation(0, 0, -20);
     
 }
 
@@ -163,6 +163,7 @@ void MeshModel::initializeNormals() {
 
         //calculate the normal initial coordinate
         meshData.m_normals[i] = glm::vec4(avg.x, avg.y, avg.z, 0);
+        
     }
 }
 
@@ -180,6 +181,67 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float n, float f,
         movedNormals[i] =  normalFactor * meshData.m_normals[i] + meshData.m_points[i];
     }
 
+    //build projection matrix
+    const float m00 = n / r;
+    const float m11 = n / t;
+    const float m22 = -(f + n) / (f - n);
+    const float m43 = -(2 * f * n) / (f - n);
+
+    const glm::mat4 projectionMatrix = glm::mat4(
+        m00, 0, 0, 0,
+        0, m11, 0, 0,
+        0, 0, m22, -1,
+        0, 0, m43, 0
+    );
+
+    //calculate the total matrix
+    totalMatrix = projectionMatrix * (viewMatrix * (worldMatrix * objectMatrix));
+    glm::mat4 untilWorldMatrix = worldMatrix * objectMatrix;
+
+    //apply total matrix on everything
+    std::vector<glm::vec2> finalScreenPoints;
+    finalScreenPoints.reserve(meshData.m_points.size());
+    for (auto& vec : meshData.m_points) {
+        glm::vec4 v4 = totalMatrix * vec;
+        v4 /= v4.w;
+        v4 = viewportMatrix * v4;
+        finalScreenPoints.push_back(glm::vec2(v4.x, v4.y));
+    }
+
+    std::vector<glm::vec2> finalScreenCoordinates;
+    for (auto& vec : coordinates) {
+        glm::vec4 v4 = totalMatrix * vec;
+        v4 /= v4.w;
+        v4 = viewportMatrix * v4;
+        finalScreenCoordinates.push_back(glm::vec2(v4.x, v4.y));
+    }
+
+    std::vector<glm::vec2> finalScreenNormals;
+    finalScreenNormals.reserve(movedNormals.size());
+    for (auto& vec : movedNormals) {
+        glm::vec4 v4 = totalMatrix * vec;
+        v4 /= v4.w;
+        v4 = viewportMatrix * v4;
+        finalScreenNormals.push_back(glm::vec2(v4.x, v4.y));
+    }
+
+    std::vector<glm::vec2> finalScreenBB;
+    for (auto& vec : BB) {
+        glm::vec4 v4 = totalMatrix * vec;
+        v4 /= v4.w;
+        v4 = viewportMatrix * v4;
+        finalScreenBB.push_back(glm::vec2(v4.x, v4.y));
+    }
+
+    //calculate the BB centroid in world coordinates
+    std::vector<glm::vec4> worldBB;
+    for (auto& vec : BB) {
+        worldBB.push_back(untilWorldMatrix * vec);
+    }
+    objectCentroid = worldBB[8];
+
+
+    /*
     //apply object matrix
     std::vector<glm::vec4> objectPoints;
     objectPoints.reserve(meshData.m_points.size());
@@ -195,12 +257,9 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float n, float f,
     for (const auto& vec : BB) {
         objectBB.push_back(objectMatrix * vec);
     }
-
-
-    //apply only rotate object matrix for the coords
     std::vector<glm::vec4> objectCoordinates;
     for (const auto& vec : coordinates) {
-        objectCoordinates.push_back(onlyRotateObjectMatrix * vec);
+        objectCoordinates.push_back(objectMatrix * vec);
     }
 
 
@@ -290,9 +349,6 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float n, float f,
     }
 
 
-    float screenWidth = 1000;
-    float screenHeight = 600;
-
     // Scale to screen size
     std::vector<glm::vec2> finalScreenPoints;
     finalScreenPoints.reserve(screenPoints.size());
@@ -320,26 +376,38 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float n, float f,
         glm::vec4 v4 = viewportMatrix * vec;
         finalScreenBB.push_back(glm::vec2(v4.x, v4.y));
     }
-
-    objectCentroid = worldBB[8];
+    */
 
     return { finalScreenPoints, finalScreenCoordinates, finalScreenNormals, finalScreenBB };
 }
 
 // Renders the object using the provided screen points
 void MeshModel::renderObj(std::vector<glm::vec2> screenPoints) {
+    std::set<std::tuple<int, int>> plottedEdges;
+
     for (const auto& face : meshData.m_faces) {
-        plotLine((int)screenPoints[face.v[0]].x, (int)screenPoints[face.v[1]].x,
-            (int)screenPoints[face.v[0]].y, (int)screenPoints[face.v[1]].y);
+        int v0 = face.v[0];
+        int v1 = face.v[1];
+        int v2 = face.v[2];
 
-        plotLine((int)screenPoints[face.v[1]].x, (int)screenPoints[face.v[2]].x,
-            (int)screenPoints[face.v[1]].y, (int)screenPoints[face.v[2]].y);
+        // Helper lambda to plot line and track it
+        auto plotUniqueLine = [&](int a, int b) {
+            if (a > b) std::swap(a, b);  // Ensure (a,b) == (b,a)
+            auto edge = std::make_tuple(a, b);
+            if (plottedEdges.find(edge) == plottedEdges.end()) {
+                plottedEdges.insert(edge);
+                plotLine((int)screenPoints[a].x, (int)screenPoints[b].x,
+                    (int)screenPoints[a].y, (int)screenPoints[b].y);
+            }
+        };
 
-        plotLine((int)screenPoints[face.v[2]].x, (int)screenPoints[face.v[0]].x,
-            (int)screenPoints[face.v[2]].y, (int)screenPoints[face.v[0]].y);
+        // Plot lines, ensuring each is plotted once
+        plotUniqueLine(v0, v1);
+        plotUniqueLine(v1, v2);
+        plotUniqueLine(v2, v0);
     }
-    std::cout << "rendered\n";
 }
+
 
 void MeshModel::renderCoords(std::vector<glm::vec2> screenCoordinates) {
     
@@ -402,7 +470,7 @@ void MeshModel::renderBB(std::vector<glm::vec2> screenBB) {
     plotLine((int)screenBB[6].x, (int)screenBB[2].x,
         (int)screenBB[6].y, (int)screenBB[2].y); //xyZ to XyZ
 
-    //xYz hello
+    //xYz
     plotLine((int)screenBB[5].x, (int)screenBB[4].x,
         (int)screenBB[5].y, (int)screenBB[4].y); //xYz to xYZ
 
@@ -416,16 +484,7 @@ void MeshModel::renderBB(std::vector<glm::vec2> screenBB) {
     Color = 0xffffffff; // return to white
 }
 
-void MeshModel::objectTranslation(float tx, float ty, float tz) {
-    glm::mat4 T = glm::mat4(
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        tx, ty, tz, 1
-    );
-    
-    objectMatrix = T * objectMatrix;
-}
+
 void MeshModel::objectRotation(float sx, float sy, float sz) {
     // X rotation matrix
     float cosx = std::cos(PI * sx/180);
@@ -460,7 +519,6 @@ void MeshModel::objectRotation(float sx, float sy, float sz) {
         0, 0, 0, 1
     );
 
-    onlyRotateObjectMatrix = Rz * Ry * Rx * onlyRotateObjectMatrix;
     objectMatrix = Rz * Ry * Rx * objectMatrix;
 }
 void MeshModel::objectScaling(float a) {
@@ -474,7 +532,7 @@ void MeshModel::objectScaling(float a) {
     objectMatrix = S * objectMatrix;
 }
 
-void MeshModel::worldTranslation(float tx, float ty, float tz) {
+void MeshModel::translation(float tx, float ty, float tz) {
     glm::mat4 M = glm::mat4(
         1, 0, 0, 0,
         0, 1, 0, 0,
@@ -562,15 +620,33 @@ glm::mat4 MeshModel::buildViewMatrix(float cx, float cy, float cz) {
     return M;
 }
 
-void MeshModel::updateViewPort(float width, float height, float offsetx, float offsety) {
+void MeshModel::updateViewPort(float width, float height) {
+
+    if (width <= 0 || height <= 0) {
+        return; // Prevent invalid window sizes
+    }
+    // Define the target aspect ratio (e.g., 16:9 or any desired aspect ratio)
+    float windowAspect = static_cast<float>(width) / static_cast<float>(height);
+
+    int viewportWidth = width, viewportHeight = height;
+
+    // Adjust viewport to maintain aspect ratio
+    if (windowAspect > targetAspect) {
+        // Window is wider than target aspect ratio
+        viewportWidth = static_cast<int>(height * targetAspect);
+    }
+    else if (windowAspect < targetAspect) {
+        // Window is taller than target aspect ratio
+        viewportHeight = static_cast<int>(width / targetAspect);
+    }
     // Calculate the center-based offsets for symmetrical letterboxing
     float centerOffsetX = width / 2.0f;
     float centerOffsetY = height / 2.0f;
 
     // Construct the viewport matrix with symmetrical letterboxing
     viewportMatrix = glm::mat4(
-        width / 2.0f, 0.0f, 0.0f, 0.0f,           // Scale X
-        0.0f, height / 2.0f, 0.0f, 0.0f,          // Scale Y
+        viewportWidth /2.0f, 0.0f, 0.0f, 0.0f,           // Scale X
+        0.0f, viewportHeight /2.0f, 0.0f, 0.0f,          // Scale Y
         0.0f, 0.0f, 1.0f, 0.0f,                   // Scale Z
         centerOffsetX, centerOffsetY, 0.0f, 1.0f  // Translate to the center
     );

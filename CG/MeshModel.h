@@ -17,6 +17,8 @@ extern float worldTransX, worldTransY, worldTransZ;
 
 #include "Obj Parser/wavefront_obj.h"
 #include "HW1.h"
+#include <set>
+#include <tuple>
 
 // MeshModel Class Declaration
 class MeshModel {
@@ -34,8 +36,11 @@ private:
     glm::vec4 objectCentroid;
 
     glm::mat4 viewportMatrix;
+    float targetAspect;
 
-    glm::mat4 onlyRotateObjectMatrix;
+    glm::mat4 totalMatrix;
+
+
 
     // Private methods
     void canonicalize();
@@ -55,17 +60,16 @@ public:
     void renderNormals(std::vector<glm::vec2> screenNormals, std::vector<glm::vec2> screenPoints);
     void renderBB(std::vector<glm::vec2> screenBB);
 
-    void objectTranslation(float tx, float ty, float tz);
     void objectRotation(float sx, float sy, float sz);
     void objectScaling(float a);
 
-    void worldTranslation(float tx, float ty, float tz);
+    void translation(float tx, float ty, float tz);
     void worldRotation(float sx, float sy, float sz);
     void worldScaling(float a);
 
     void applyViewMatrix(float cx, float cy, float cz);
     void lookAtObject(float cx, float cy, float cz);
 
-    void updateViewPort(float width,float height, float offsetx, float offsety);
+    void updateViewPort(float width,float height);
 };
 

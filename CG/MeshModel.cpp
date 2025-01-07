@@ -402,7 +402,7 @@ void MeshModel::renderBB(std::vector<glm::vec2> screenBB) {
     plotLine((int)screenBB[6].x, (int)screenBB[2].x,
         (int)screenBB[6].y, (int)screenBB[2].y); //xyZ to XyZ
 
-    //xYz
+    //xYz hello
     plotLine((int)screenBB[5].x, (int)screenBB[4].x,
         (int)screenBB[5].y, (int)screenBB[4].y); //xYz to xYZ
 

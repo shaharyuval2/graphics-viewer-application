@@ -136,10 +136,10 @@ void Transform::worldTranslate(float tx, float ty, float tz) {
     worldT = M * worldT;
 }
 
-glm::mat4 Transform::getObjectTransformationMatrix() {
+glm::mat4 Transform::getObjectTransformationMatrix() const{
     return objectT * (objectS * objectR);
 }
 
-glm::mat4 Transform::getWorldTransformationMatrix() {
+glm::mat4 Transform::getWorldTransformationMatrix() const{
     return worldR * (worldS * worldT);
 }

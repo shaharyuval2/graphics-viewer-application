@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
 void TW_CALL loadOBJModel(void* data)
 {
 	std::wstring str = getOpenFileName();
-	myMesh = new MeshModel(str,width,height);
+	myMesh = new MeshModel(str,width,height, frustum_near, frustum_far, frustum_top, frustum_right);
 }
 
 
@@ -250,7 +250,8 @@ void initGraphics(int argc, char* argv[])
 void drawScene()
 {
 	if (myMesh) { // Check if a model is loaded
-		auto result = myMesh->ProjectToScreen(frustum_near, frustum_far, frustum_top, frustum_right, normalFactor);
+		myMesh->updateProjectMatrix(frustum_near, frustum_far, frustum_top, frustum_right);
+		auto result = myMesh->ProjectToScreen(normalFactor);
 		std::vector<glm::vec2> screenPoints = result[0];
 		std::vector<glm::vec2> screenCoordinates = result[1];
 		std::vector<glm::vec2> screenNormals = result[2];
@@ -293,35 +294,19 @@ void drawScene()
 void ApplyTransformations() {
 	if (isObjectCoords) {
 		// Apply transformations in object coordinates
-		//myMesh->objectTranslation(objTransX, objTransY, objTransZ);
-		
-		//old transformations
-		//myMesh->translation(transX, transY, transZ);
-		//myMesh->objectRotation(spinX, spinY, spinZ);
-		//myMesh->objectScaling(scale);
-
-		//new transformations
 		myMesh->applyObjectTransformations(spinX, spinY, spinZ, scale, transX, transY, transZ);
 	}
 	else {
 		// Apply transformations in world coordinates
-
-		//old transformations
-		//myMesh->translation(transX, transY, transZ);
-		//myMesh->worldRotation(spinX, spinY, spinZ);
-		//myMesh->worldScaling(scale);
-
 		myMesh->applyWorldTransformations(spinX, spinY, spinZ, scale, transX, transY, transZ);
 	}
-	camera_x += dcamera_x;
-	camera_y += dcamera_y;
-	camera_z += dcamera_z;
-	myMesh->applyViewMatrix(camera_x, camera_y, camera_z);
+	myMesh->moveCameraPosition(dcamera_x, dcamera_y, dcamera_z);
+	
 	glutPostRedisplay(); // Request redraw
 }
 
 void LookAt() {
-	myMesh->lookAtObject(camera_x, camera_y, camera_z);
+	myMesh->lookAt();
 	glutPostRedisplay(); // Request redraw
 }
 

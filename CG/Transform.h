@@ -17,8 +17,8 @@ public:
     void worldTranslate(float tx, float ty, float tz);
 
     //get final transformation matrix
-    glm::mat4 getObjectTransformationMatrix();
-    glm::mat4 getWorldTransformationMatrix();
+    glm::mat4 getObjectTransformationMatrix() const;
+    glm::mat4 getWorldTransformationMatrix() const;
 
 private:
     glm::mat4 objectR;

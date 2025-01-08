@@ -12,17 +12,21 @@ float transX = 0.0f, transY = 0.0f, transZ = 0.0f;
 
 
 // Constructor: Loads the OBJ file and canonicalizes the coordinates
-MeshModel::MeshModel(std::wstring filename, float width, float height) {
+MeshModel::MeshModel(std::wstring filename, float width, float height, float mnear, float mfar, float top, float right) {
 
     transform = Transform();
+    camera = Camera(mnear, mfar, top, right);
 
+    /*
     //initialize to I
-    objectMatrix = glm::mat4(1.0f); 
-    worldMatrix = glm::mat4(1.0f); 
     viewMatrix = glm::mat4(1.0f);
     translationViewMatrix = glm::mat4(1.0f);
     rotationViewMatrix = glm::mat4(1.0f);
-    
+
+    //initialize f
+    nonhomoF = glm::vec3(0, 0, -1);
+    */
+
     //initialize viewport matrix
     targetAspect = width / height;
     updateViewPort(width, height);
@@ -33,8 +37,6 @@ MeshModel::MeshModel(std::wstring filename, float width, float height) {
     coordinates.push_back(glm::vec4(0, 2, 0, 1));
     coordinates.push_back(glm::vec4(0, 0, 2, 1));
 
-    //initialize f
-    nonhomoF = glm::vec3(0, 0, -1);
 
     bool result = meshData.load_file(filename);
 
@@ -170,8 +172,26 @@ glm::vec3 MeshModel::nonhomogenous(glm::vec4 vec4) {
 }
 
 
+
+/*
+void printMatrix(const glm::mat4& matrix, const std::string& name) {
+    std::cout << name << ":\n";
+    for (int i = 0; i < 4; ++i) {
+        std::cout << "| ";
+        for (int j = 0; j < 4; ++j) {
+            std::cout << matrix[j][i] << " ";
+        }
+        std::cout << "|\n";
+    }
+    std::cout << std::endl;
+}
+*/
+
+
+
+
 // Projects points to screen coordinates
-std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float n, float f, float t, float r, float normalFactor) {
+std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFactor) {
     //scaling the normals according to the factor that the user inputed
     std::vector<glm::vec4> movedNormals;
     movedNormals.resize(meshData.m_points.size());
@@ -179,22 +199,12 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float n, float f,
         movedNormals[i] =  normalFactor * meshData.m_normals[i] + meshData.m_points[i];
     }
 
-    //build projection matrix
-    const float m00 = n / r;
-    const float m11 = n / t;
-    const float m22 = -(f + n) / (f - n);
-    const float m43 = -(2 * f * n) / (f - n);
-
-    const glm::mat4 projectionMatrix = glm::mat4(
-        m00, 0, 0, 0,
-        0, m11, 0, 0,
-        0, 0, m22, -1,
-        0, 0, m43, 0
-    );
-
     //calculate the total matrix
     objectMatrix = transform.getObjectTransformationMatrix();
     worldMatrix = transform.getWorldTransformationMatrix();
+    viewMatrix = camera.getViewMatrix();
+    projectionMatrix = camera.getProjectionMatrix();
+
     totalMatrix = projectionMatrix * (viewMatrix * (worldMatrix * objectMatrix));
     glm::mat4 untilWorldMatrix = worldMatrix * objectMatrix;
 
@@ -347,112 +357,6 @@ void MeshModel::renderBB(std::vector<glm::vec2> screenBB) {
     Color = 0xffffffff; // return to white
 }
 
-//old transformation functions
-void MeshModel::objectRotation(float sx, float sy, float sz) {
-    // X rotation matrix
-    float cosx = std::cos(PI * sx/180);
-    float sinx = std::sin(PI * sx/180);
-
-    glm::mat4 Rx = glm::mat4(
-        1, 0, 0, 0,
-        0, cosx, -sinx, 0,
-        0, sinx, cosx, 0,
-        0, 0, 0, 1
-    );
-
-    // Y rotation matrix
-    float cosy = std::cos(PI * sy/180);
-    float siny = std::sin(PI * sy/180);
-
-    glm::mat4 Ry = glm::mat4(
-        cosy, 0, siny, 0,
-        0, 1, 0, 0,
-        -siny, 0, cosy, 0,
-        0, 0, 0, 1
-    );
-
-    // Z rotation matrix
-    float cosz = std::cos(PI * sz/180);
-    float sinz = std::sin(PI * sz/180);
-
-    glm::mat4 Rz = glm::mat4(
-        cosz, sinz, 0, 0,
-        -sinz, cosz, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    );
-
-    objectMatrix = Rz * Ry * Rx * objectMatrix;
-}
-void MeshModel::objectScaling(float a) {
-    glm::mat4 S = glm::mat4(
-        a, 0, 0, 0,
-        0, a, 0, 0,
-        0, 0, a, 0,
-        0, 0, 0, 1
-    );
-
-    objectMatrix = S * objectMatrix;
-}
-
-void MeshModel::translation(float tx, float ty, float tz) {
-    glm::mat4 M = glm::mat4(
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        tx, ty, tz, 1
-    );
-
-    worldMatrix = M * worldMatrix;
-
-}
-void MeshModel::worldRotation(float sx, float sy, float sz) {
-    // X rotation matrix
-    float cosx = std::cos(PI * sx / 180);
-    float sinx = std::sin(PI * sx / 180);
-
-    glm::mat4 Rx = glm::mat4(
-        1, 0, 0, 0,
-        0, cosx, -sinx, 0,
-        0, sinx, cosx, 0,
-        0, 0, 0, 1
-    );
-
-    // Y rotation matrix
-    float cosy = std::cos(PI * sy / 180);
-    float siny = std::sin(PI * sy / 180);
-
-    glm::mat4 Ry = glm::mat4(
-        cosy, 0, siny, 0,
-        0, 1, 0, 0,
-        -siny, 0, cosy, 0,
-        0, 0, 0, 1
-    );
-
-    // Y rotation matrix
-    float cosz = std::cos(PI * sz / 180);
-    float sinz = std::sin(PI * sz / 180);
-
-    glm::mat4 Rz = glm::mat4(
-        cosz, sinz, 0, 0,
-        -sinz, cosz, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1
-    );
-
-    worldMatrix = Rz * Ry * Rx * worldMatrix;
-}
-void MeshModel::worldScaling(float a) {
-    glm::mat4 S = glm::mat4(
-        a, 0, 0, 0,
-        0, a, 0, 0,
-        0, 0, a, 0,
-        0, 0, 0, 1
-    );
-
-    worldMatrix = S * worldMatrix;
-}
-
 void MeshModel::applyObjectTransformations(float sx, float sy, float sz, float factor, float tx, float ty, float tz) {
     transform.objectRotate(sx, sy, sz);
     transform.objectScale(factor);
@@ -465,34 +369,16 @@ void MeshModel::applyWorldTransformations(float sx, float sy, float sz, float fa
     transform.worldTranslate(tx, ty, tz);
 }
 
-void MeshModel::applyViewMatrix(float cx, float cy, float cz) {
-    viewMatrix = buildViewMatrix(cx, cy, cz);
+void MeshModel::moveCameraPosition(float dcx, float dcy, float dcz) {
+    camera.movePosition(dcx, dcy, dcz);
 }
 
-
-void MeshModel::lookAtObject(float cx, float cy, float cz) {
-    std::cout << "in look at objec\n";
-    glm::vec4 cameraPosition = glm::vec4(cx, cy, cz,1);
-    nonhomoF = glm::normalize(nonhomogenous(objectCentroid) - nonhomogenous(cameraPosition));
-    std::cout << "non homo F (" << nonhomoF.x << "," << nonhomoF.y << "," << nonhomoF.z << ")\n";
-    viewMatrix = buildViewMatrix(cx, cy, cz);
+void MeshModel::lookAt() {
+    camera.lookAt(objectCentroid);
 }
 
-glm::mat4 MeshModel::buildViewMatrix(float cx, float cy, float cz) {
-    glm::vec3 cameraPosition = glm::vec3(cx, cy, cz);
-
-    //calculate R and U
-    glm::vec3 U = glm::vec3(0, 1, 0);
-    glm::vec3 R = glm::normalize(glm::cross(nonhomoF, U));
-    U = glm::normalize(glm::cross(R, nonhomoF));
-
-    glm::mat4 M = glm::mat4(
-        R.x, U.x, -nonhomoF.x, 0.0f,                          // First column
-        R.y, U.y, -nonhomoF.y, 0.0f,                          // Second column
-        R.z, U.z, -nonhomoF.z, 0.0f,                          // Third column
-        -glm::dot(R, cameraPosition), -glm::dot(U, cameraPosition), glm::dot(nonhomoF, cameraPosition), 1.0f                                                  // Fourth column
-    );
-    return M;
+void MeshModel::updateProjectMatrix(float mnear, float mfar, float top, float right) {
+    camera.updateProjectionMatrix(mnear, mfar, top, right);
 }
 
 void MeshModel::updateViewPort(float width, float height) {
@@ -526,3 +412,6 @@ void MeshModel::updateViewPort(float width, float height) {
         centerOffsetX, centerOffsetY, 0.0f, 1.0f  // Translate to the center
     );
 }
+
+
+

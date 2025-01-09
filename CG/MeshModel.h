@@ -14,6 +14,7 @@ extern float transX, transY, transZ;
 #include "HW1.h"
 #include "Transform.h"
 #include "Camera.h"
+#include "Material.h"
 
 #include <set>
 #include <tuple>
@@ -24,6 +25,7 @@ private:
     Wavefront_obj meshData; // Stores mesh data
     Transform transform;
     Camera camera;
+    Material material;
 
     glm::mat4 objectMatrix;
     glm::mat4 worldMatrix;
@@ -39,6 +41,9 @@ private:
     float targetAspect;
 
     glm::mat4 totalMatrix;
+
+    //HW3
+    //glm::vec3 material; // (ka,kd,ks)
 
 
 

@@ -186,6 +186,7 @@
     <ClInclude Include="..\Obj Parser\wavefront_obj.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="HW1.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="MeshModel.h" />
     <ClInclude Include="Renderer.h" />

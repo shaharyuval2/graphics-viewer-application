@@ -12,20 +12,11 @@ float transX = 0.0f, transY = 0.0f, transZ = 0.0f;
 
 
 // Constructor: Loads the OBJ file and canonicalizes the coordinates
-MeshModel::MeshModel(std::wstring filename, float width, float height, float mnear, float mfar, float top, float right) {
+MeshModel::MeshModel(std::wstring filename, float width, float height, const Camera& camera, const Material& material) {
 
     transform = Transform();
-    camera = Camera(mnear, mfar, top, right);
-
-    /*
-    //initialize to I
-    viewMatrix = glm::mat4(1.0f);
-    translationViewMatrix = glm::mat4(1.0f);
-    rotationViewMatrix = glm::mat4(1.0f);
-
-    //initialize f
-    nonhomoF = glm::vec3(0, 0, -1);
-    */
+    this->camera = camera;
+    this->material = material;
 
     //initialize viewport matrix
     targetAspect = width / height;

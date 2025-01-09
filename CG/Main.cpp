@@ -266,9 +266,9 @@ void TW_CALL loadOBJModel(void* data)
 	Material material = Material(ka, kd, ks, n, materialColor);
 	Light light1 = Light(light1Type, 1, light1Position, light1Direction, light1Intensity);
 	Light light2 = Light(light2Type, light2Enabled, light2Position, light2Direction, light2Intensity);
-	light1.printParameters();
-	light2.printParameters();
-	myMesh = new MeshModel(str,width,height, camera,material);
+	Lighting sceneLighting = Lighting(light1, light2, ambientLightIntensity);
+
+	myMesh = new MeshModel(str, width, height, camera, material, sceneLighting);
 }
 
 

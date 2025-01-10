@@ -13,8 +13,8 @@ Shading::Shading(ZBufferMode ZMode, ShadingMode ShadingMode) {
 }
 
 void Shading::rasterize(const std::vector<glm::vec4>& vertices, const std::vector<glm::vec4>& normals,
-    const std::vector<Wavefront_obj::Face>& faces, const glm::vec3& ambientColor, const glm::vec3& objectColor,
-    int screenWidth, int screenHeight) {
+    const std::vector<Wavefront_obj::Face>& faces, const glm::vec3& ambientColor, const glm::vec3& objectColor
+    , float specularCoefficient, float shininess, int screenWidth, int screenHeight) {
 
     Renderer renderer;
     std::vector<Pixel> pixels; // Container for visible pixels
@@ -88,35 +88,28 @@ void Shading::rasterize(const std::vector<glm::vec4>& vertices, const std::vecto
                     if (depth < zBuffer[bufferIndex]) {
                         zBuffer[bufferIndex] = depth;
 
+                        //diffuse
                         glm::vec3 interpolatedNormal = glm::normalize(bary0 * n0 + bary1 * n1 + bary2 * n2);
                         float diffuseIntensity = std::max(0.0f, glm::dot(interpolatedNormal, lightDir));
-                        
 
-                        glm::vec3 color = ambientColor * objectColor + 0.5f * diffuseIntensity * objectColor;
+                        //specular
+                        glm::vec3 viewDir = glm::normalize(- glm::vec3(bary0 * v0 + bary1 * v1 + bary2 * v2));
+                        glm::vec3 reflectDir = glm::reflect(-lightDir, interpolatedNormal);
+                        float specularIntensity = std::pow(std::max(glm::dot(viewDir, reflectDir), 0.0f), shininess);
 
-                        int targetY = 400; // Replace with your desired y-coordinate
-                        if (y == targetY && diffuseIntensity > 0) {
-                            glm::vec3 color = ambientColor * objectColor + 0.5f * diffuseIntensity * objectColor;
-                            // Clamp color to [0, 1] for safety
-                            color = glm::clamp(color, 0.0f, 1.0f);
+                        glm::vec3 color = ambientColor * objectColor
+                            + 0.5f * diffuseIntensity * objectColor
+                            + specularCoefficient * specularIntensity * glm::vec3(1.0f);
 
-                            std::cout << "x: " << x << ", y: " << y
-                                << ", color: (" << color.r << ", " << color.g << ", " << color.b << ")"
-                                << std::endl;
-                        }
-
-                        // Cap each component at 255
-                        color.x = std::min(color.x, 1.0f);
-                        color.y = std::min(color.y, 1.0f);
-                        color.z = std::min(color.z, 1.0f);
+                        color = glm::clamp(color, 0.0f, 1.0f);
 
 
 
                         // Convert color to RGBA format
                         unsigned int rgbaColor =
-                            (static_cast<unsigned int>(color.r * 255) & 0xFF) << 16 |
-                            (static_cast<unsigned int>(color.g * 255) & 0xFF) << 8 |
-                            (static_cast<unsigned int>(color.b * 255) & 0xFF) |
+                            (static_cast<unsigned int>(color.b * 255) & 0xFF) << 16 |  // Blue in bits 16-23
+                            (static_cast<unsigned int>(color.g * 255) & 0xFF) << 8 |  // Green in bits 8-15
+                            (static_cast<unsigned int>(color.r * 255) & 0xFF) |        // Red in bits 0-7
                             0xFF << 24;                                              // Alpha in bits 24-31
 
 

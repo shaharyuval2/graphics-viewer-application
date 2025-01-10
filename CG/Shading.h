@@ -32,6 +32,8 @@ public:
         const std::vector<Wavefront_obj::Face>& faces,     // Triangles as indices into the vertex array
         const glm::vec3& ambientColor,           // Ambient light intensity
         const glm::vec3& objectColor,            // Object base color
+        float specularCoefficient,               // Specular coefficient
+        float shininess,                         // Shininness
         int screenWidth,                         // Screen width in pixels
         int screenHeight                         // Screen height in pixels
     );

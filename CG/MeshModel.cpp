@@ -427,5 +427,5 @@ void MeshModel::updateViewPort(float width, float height) {
 
 
 void MeshModel::rasterize() {
-    shading.rasterize(almostClipVertices, almostClipNormals, meshData.m_faces, lighting.ambientIntensity, material.color, width, height);
+    shading.rasterize(almostClipVertices, almostClipNormals, meshData.m_faces, lighting.ambientIntensity, material.color,material.K.z, material.n, width, height);
 }

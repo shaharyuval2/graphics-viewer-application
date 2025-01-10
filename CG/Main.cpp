@@ -7,7 +7,6 @@
 #include <vector>
 #include <Windows.h>
 #include <assert.h>
-#include <iostream>
 
 #include "Utils.h"
 #include "Renderer.h"
@@ -75,7 +74,7 @@ glm::vec3 light1Direction(0.0f, 0.0f, -1.0f); // Direction for light 1 (if it's 
 glm::vec3 light2Direction(0.0f, 0.0f, -1.0f); // Direction for light 2 (if it's directional)
 glm::vec3 light1Intensity(1.0f, 1.0f, 1.0f); // RGB intensity for light 1
 glm::vec3 light2Intensity(1.0f, 1.0f, 1.0f); // RGB intensity for light 2
-glm::vec3 ambientLightIntensity(1.0f, 1.0f, 1.0f); // Global ambient light intensity
+glm::vec3 ambientLightIntensity(0.5f, 0.5f, 0.5f); // Global ambient light intensity
 
 //shading properties
 ZBufferMode currentZBufferMode = ZBUFFER_MODE_1;
@@ -338,7 +337,8 @@ void drawScene()
 		std::vector<glm::vec2> screenCoordinates = result[1];
 		std::vector<glm::vec2> screenNormals = result[2];
 		std::vector<glm::vec2> screenBB = result[3];
-		myMesh->renderObj(screenPoints);
+		myMesh->rasterize();
+		//myMesh->renderObj(screenPoints);
 		if (showCoords) {
 			myMesh->renderCoords(screenCoordinates);
 		}
@@ -348,6 +348,7 @@ void drawScene()
 		if (showBB) {
 			myMesh->renderBB(screenBB);
 		}
+		
 	}
 	else {
 		switch (currentMode) {

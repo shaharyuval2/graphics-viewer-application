@@ -41,8 +41,15 @@ private:
     glm::mat4 projectionMatrix;
     glm::vec4 objectCentroid;
 
+    //projection
     glm::mat4 viewportMatrix;
     float targetAspect;
+    int width;
+    int height;
+
+    //shading
+    std::vector<glm::vec4> almostClipVertices;
+    std::vector<glm::vec4> almostClipNormals;
 
     glm::mat4 totalMatrix;
 
@@ -79,5 +86,8 @@ public:
     void updateProjectMatrix(float mnear, float mfar, float top, float right);
 
     void updateViewPort(float width,float height);
+
+    //rasterize and render
+    void rasterize();
 };
 

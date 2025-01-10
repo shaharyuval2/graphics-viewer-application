@@ -15,7 +15,7 @@ public:
         enabled(true),
         position(0.0f),
         direction(0.0f, 0.0f, -1.0f),
-        intensity(1.0f) {}
+        intensity(0.3f) {}
 
     Light(LightType t, bool enabled, glm::vec3 position, glm::vec3 direction, glm::vec3 intensity) {
         this->type = t;

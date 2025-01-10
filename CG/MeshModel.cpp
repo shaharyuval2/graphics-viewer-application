@@ -15,6 +15,9 @@ float transX = 0.0f, transY = 0.0f, transZ = 0.0f;
 MeshModel::MeshModel(std::wstring filename, float width, float height, const Camera& camera,
     const Material& material, const Lighting& lighting, const Shading& shading) {
 
+    this->width = width;
+    this->height = height;
+
     transform = Transform();
     this->camera = camera;
     this->material = material;
@@ -202,11 +205,14 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFacto
     totalMatrix = projectionMatrix * (viewMatrix * (worldMatrix * objectMatrix));
     glm::mat4 untilWorldMatrix = worldMatrix * objectMatrix;
 
-    //apply total matrix on everything
+
+    almostClipVertices.reserve(meshData.m_points.size());
     std::vector<glm::vec2> finalScreenPoints;
     finalScreenPoints.reserve(meshData.m_points.size());
     for (auto& vec : meshData.m_points) {
         glm::vec4 v4 = totalMatrix * vec;
+        almostClipVertices.push_back(v4);
+
         v4 /= v4.w;
         v4 = viewportMatrix * v4;
         finalScreenPoints.push_back(glm::vec2(v4.x, v4.y));
@@ -220,10 +226,20 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFacto
         finalScreenCoordinates.push_back(glm::vec2(v4.x, v4.y));
     }
 
+    almostClipNormals.reserve(movedNormals.size());
     std::vector<glm::vec2> finalScreenNormals;
     finalScreenNormals.reserve(movedNormals.size());
-    for (auto& vec : movedNormals) {
-        glm::vec4 v4 = totalMatrix * vec;
+
+    for (size_t i = 0; i < movedNormals.size(); ++i) {
+        glm::vec4 transformedMovedNormal = totalMatrix * movedNormals[i];
+        glm::vec4 clipVertex = almostClipVertices[i];
+        glm::vec4 clipNormal = transformedMovedNormal - clipVertex;
+        clipNormal = glm::vec4(glm::normalize(glm::vec3(clipNormal)), 0.0f); // Ensure w = 0 for directional vectors
+
+        // Save the result in almostClipNormals
+        almostClipNormals.push_back(clipNormal);
+
+        glm::vec4 v4 = transformedMovedNormal;
         v4 /= v4.w;
         v4 = viewportMatrix * v4;
         finalScreenNormals.push_back(glm::vec2(v4.x, v4.y));
@@ -245,7 +261,7 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFacto
     objectCentroid = worldBB[8];
 
 
-    return { finalScreenPoints, finalScreenCoordinates, finalScreenNormals, finalScreenBB };
+    return { finalScreenPoints, finalScreenCoordinates, finalScreenNormals, finalScreenBB};
 }
 
 // Renders the object using the provided screen points
@@ -376,6 +392,8 @@ void MeshModel::updateProjectMatrix(float mnear, float mfar, float top, float ri
 }
 
 void MeshModel::updateViewPort(float width, float height) {
+    this->width = width;
+    this->height = height;
 
     if (width <= 0 || height <= 0) {
         return; // Prevent invalid window sizes
@@ -408,4 +426,6 @@ void MeshModel::updateViewPort(float width, float height) {
 }
 
 
-
+void MeshModel::rasterize() {
+    shading.rasterize(almostClipVertices, almostClipNormals, meshData.m_faces, lighting.ambientIntensity, material.color, width, height);
+}

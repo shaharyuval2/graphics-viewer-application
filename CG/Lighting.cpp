@@ -1,6 +1,7 @@
 #include "Lighting.h"
 #include <iostream>
 
+
 // Constructor
 Lighting::Lighting()
     : ambientIntensity(1.0f, 1.0f, 1.0f) { // Default ambient intensity to white

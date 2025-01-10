@@ -16,6 +16,7 @@ extern float transX, transY, transZ;
 #include "Camera.h"
 #include "Material.h"
 #include "Lighting.h"
+#include "Shading.h"
 
 #include <set>
 #include <tuple>
@@ -28,6 +29,7 @@ private:
     Camera camera;
     Material material;
     Lighting lighting;
+    Shading shading;
 
     glm::mat4 objectMatrix;
     glm::mat4 worldMatrix;
@@ -57,7 +59,7 @@ private:
 public:
     // Constructor
     MeshModel(std::wstring filename, float width, float height, const Camera& camera, const Material& material,
-        const Lighting& lighting);
+        const Lighting& lighting, const Shading& shading);
 
     // Public methods
     std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFactor);

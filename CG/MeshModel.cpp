@@ -13,12 +13,13 @@ float transX = 0.0f, transY = 0.0f, transZ = 0.0f;
 
 // Constructor: Loads the OBJ file and canonicalizes the coordinates
 MeshModel::MeshModel(std::wstring filename, float width, float height, const Camera& camera,
-    const Material& material, const Lighting& lighting) {
+    const Material& material, const Lighting& lighting, const Shading& shading) {
 
     transform = Transform();
     this->camera = camera;
     this->material = material;
     this->lighting = lighting;
+    this->shading = shading;
 
     //initialize viewport matrix
     targetAspect = width / height;

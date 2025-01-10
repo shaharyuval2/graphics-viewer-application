@@ -180,6 +180,7 @@
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="MeshModel.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Shading.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
@@ -192,6 +193,7 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="MeshModel.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Shading.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>

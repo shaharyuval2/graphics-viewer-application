@@ -77,6 +77,11 @@ glm::vec3 light1Intensity(1.0f, 1.0f, 1.0f); // RGB intensity for light 1
 glm::vec3 light2Intensity(1.0f, 1.0f, 1.0f); // RGB intensity for light 2
 glm::vec3 ambientLightIntensity(1.0f, 1.0f, 1.0f); // Global ambient light intensity
 
+//shading properties
+ZBufferMode currentZBufferMode = ZBUFFER_MODE_1;
+ShadingMode currentShadingMode = WIREFRAME;
+
+
 
 
 void TW_CALL loadOBJModel(void* clientData);
@@ -231,6 +236,26 @@ int main(int argc, char* argv[])
 	TwAddVarRW(bar, "Light 2 Intensity", TW_TYPE_COLOR3F, &light2Intensity, " label='Light 2 Intensity' group='Light Sources' help='RGB intensity of light 2' ");
 	TwDefine(" TweakBar/'Light Sources' opened=false "); // light Attributes folder
 
+	//shading
+	const TwEnumVal zBufferModes[] = {
+		{ ZBUFFER_MODE_1, "Nonlinear Interpolation (f(z))" },
+		{ ZBUFFER_MODE_2, "Invert f(z) Per Pixel" },
+		{ ZBUFFER_MODE_3, "Invert f(z) Per Vertex, Linear Interpolation" }
+	};
+	TwType zBufferModeType = TwDefineEnum("ZBufferModeType", zBufferModes, 3);
+	TwAddVarRW(bar, "Z-Buffer Mode", zBufferModeType, &currentZBufferMode, " label='Z-Buffer Mode' group='Shading' " " help='Select the z-buffer mode for depth comparison.' ");
+
+	// Shading Modes
+	const TwEnumVal shadingModes[] = {
+		{ WIREFRAME, "Wireframe" },
+		{ FLAT, "Flat Shading" },
+		{ GOURAUD, "Gouraud Shading" },
+		{ PHONG, "Phong Shading" }
+	};
+	TwType shadingModeType = TwDefineEnum("ShadingModeType", shadingModes, 4);
+	TwAddVarRW(bar, "Shading Mode", shadingModeType, &currentShadingMode, " label='Shading Mode' group='Shading' " " help='Select the shading mode for rendering.' ");
+	TwDefine(" TweakBar/'Shading' opened=false ");
+
 	//color
 	TwAddVarRW(bar, "Color", TW_TYPE_COLOR32, &Color, " label='Color' help='Choose the color of the line.' ");
 
@@ -267,8 +292,9 @@ void TW_CALL loadOBJModel(void* data)
 	Light light1 = Light(light1Type, 1, light1Position, light1Direction, light1Intensity);
 	Light light2 = Light(light2Type, light2Enabled, light2Position, light2Direction, light2Intensity);
 	Lighting sceneLighting = Lighting(light1, light2, ambientLightIntensity);
+	Shading sceneShading = Shading(currentZBufferMode, currentShadingMode);
 
-	myMesh = new MeshModel(str, width, height, camera, material, sceneLighting);
+	myMesh = new MeshModel(str, width, height, camera, material, sceneLighting, sceneShading);
 }
 
 

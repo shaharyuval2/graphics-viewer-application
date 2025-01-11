@@ -13,14 +13,24 @@ Shading::Shading(ZBufferMode ZMode, ShadingMode ShadingMode) {
 }
 
 void Shading::rasterize(const std::vector<glm::vec4>& vertices, const std::vector<glm::vec4>& normals,
-    const std::vector<Wavefront_obj::Face>& faces, const glm::vec3& ambientColor, const glm::vec3& objectColor
-    , float specularCoefficient, float shininess, int screenWidth, int screenHeight) {
+    const std::vector<Wavefront_obj::Face>& faces, const Lighting& lighting, Material material
+    , int screenWidth, int screenHeight) {
 
     Renderer renderer;
     std::vector<Pixel> pixels; // Container for visible pixels
 
     //for now light source is static
-    glm::vec3 lightDir = glm::normalize(glm::vec3(0.0f, 0.0f, -1.0f)); // Directional light
+    // Light source properties
+    glm::vec3 light1Dir = -lighting.light1.direction;
+    light1Dir.z = -light1Dir.z;
+    glm::vec3 light1Pos = lighting.light1.position;
+
+    glm::vec3 light2Dir = -lighting.light2.direction;
+    light2Dir.z = -light2Dir.z;
+    glm::vec3 light2Pos = lighting.light2.position;
+
+    float light2enabled = lighting.light2.enabled;
+    float dampingFactor = 1.0f / (1 + light2enabled);
 
     // allocate and Initialize the Z-buffer with maximum depth
     double* zBuffer = new double[screenWidth * screenHeight];
@@ -29,10 +39,11 @@ void Shading::rasterize(const std::vector<glm::vec4>& vertices, const std::vecto
     // Loop through each face
     for (const auto& face : faces) {
         // Extract vertex positions
-        // Extract vertex positions
         glm::vec4 p0 = vertices[face.v[0]];
         glm::vec4 p1 = vertices[face.v[1]];
         glm::vec4 p2 = vertices[face.v[2]];
+
+        //std::cout << "p0: (" << p0.x << ", " << p0.y << ", " << p0.z << ", " << p0.w << ")" << std::endl;
 
         glm::vec3 n0 = glm::vec3(normals[face.v[0]]);
         glm::vec3 n1 = glm::vec3(normals[face.v[1]]);
@@ -88,35 +99,53 @@ void Shading::rasterize(const std::vector<glm::vec4>& vertices, const std::vecto
                     if (depth < zBuffer[bufferIndex]) {
                         zBuffer[bufferIndex] = depth;
 
-                        //diffuse
+
                         glm::vec3 interpolatedNormal = glm::normalize(bary0 * n0 + bary1 * n1 + bary2 * n2);
-                        float diffuseIntensity = std::max(0.0f, glm::dot(interpolatedNormal, lightDir));
+                        glm::vec3 fragmentPos = bary0 * v0 + bary1 * v1 + bary2 * v2;
 
-                        //specular
-                        glm::vec3 viewDir = glm::normalize(- glm::vec3(bary0 * v0 + bary1 * v1 + bary2 * v2));
-                        glm::vec3 reflectDir = glm::reflect(-lightDir, interpolatedNormal);
-                        float specularIntensity = std::pow(std::max(glm::dot(viewDir, reflectDir), 0.0f), shininess);
+                        // Light 1 calculations
+                        float diffuseIntensity1 = 0.0f;
+                        float specularIntensity1 = 0.0f;
+                        if (lighting.light1.type == DIRECTIONAL) {
+                            diffuseIntensity1 = std::max(0.0f, glm::dot(interpolatedNormal, light1Dir));
+                            glm::vec3 reflectDir1 = glm::reflect(-light1Dir, interpolatedNormal);
+                            specularIntensity1 = std::pow(std::max(glm::dot(glm::normalize(-fragmentPos), reflectDir1), 0.0f), material.n);
+                        }
+                        else if (lighting.light1.type == POINTY) {
+                            glm::vec3 light1ToFrag = glm::normalize(light1Pos - fragmentPos);
+                            diffuseIntensity1 = std::max(0.0f, glm::dot(interpolatedNormal, light1ToFrag));
+                            glm::vec3 reflectDir1 = glm::reflect(-light1ToFrag, interpolatedNormal);
+                            specularIntensity1 = std::pow(std::max(glm::dot(glm::normalize(-fragmentPos), reflectDir1), 0.0f), material.n);
+                        }
 
-                        glm::vec3 color = ambientColor * objectColor
-                            + 0.5f * diffuseIntensity * objectColor
-                            + specularCoefficient * specularIntensity * glm::vec3(1.0f);
+                        // Light 2 calculations
+                        float diffuseIntensity2 = 0.0f;
+                        float specularIntensity2 = 0.0f;
+                        if (lighting.light2.type == DIRECTIONAL) {
+                            diffuseIntensity2 = std::max(0.0f, glm::dot(interpolatedNormal, light2Dir));
+                            glm::vec3 reflectDir2 = glm::reflect(-light2Dir, interpolatedNormal);
+                            specularIntensity2 = std::pow(std::max(glm::dot(glm::normalize(-fragmentPos), reflectDir2), 0.0f), material.n);
+                        }
+                        else if (lighting.light2.type == POINTY) {
+                            glm::vec3 light2ToFrag = glm::normalize(light2Pos - fragmentPos);
+                            diffuseIntensity2 = std::max(0.0f, glm::dot(interpolatedNormal, light2ToFrag));
+                            glm::vec3 reflectDir2 = glm::reflect(-light2ToFrag, interpolatedNormal);
+                            specularIntensity2 = std::pow(std::max(glm::dot(glm::normalize(-fragmentPos), reflectDir2), 0.0f), material.n);
+                        }
+                        
 
-                        color = glm::clamp(color, 0.0f, 1.0f);
-
-
+                        glm::vec3 color = material.K.x * lighting.ambientIntensity * material.color
+                            + dampingFactor * (material.K.y * diffuseIntensity1 * material.color
+                            + material.K.z * specularIntensity1 * glm::vec3(1.0f)
+                            + light2enabled * (material.K.y * diffuseIntensity2 * material.color
+                            + material.K.z * specularIntensity2 * glm::vec3(1.0f)));
 
                         // Convert color to RGBA format
-                        unsigned int rgbaColor =
-                            (static_cast<unsigned int>(color.b * 255) & 0xFF) << 16 |  // Blue in bits 16-23
-                            (static_cast<unsigned int>(color.g * 255) & 0xFF) << 8 |  // Green in bits 8-15
-                            (static_cast<unsigned int>(color.r * 255) & 0xFF) |        // Red in bits 0-7
-                            0xFF << 24;                                              // Alpha in bits 24-31
+                        unsigned int rgbaColor = material.ConvertVectortoUint32(color);
 
 
                         // store the pixel
                         pixels.push_back({ x, y, rgbaColor });
-
-                        
                     }
                 }
             }

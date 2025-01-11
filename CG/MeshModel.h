@@ -83,9 +83,15 @@ public:
     //new camera
     void moveCameraPosition(float dcx, float dcy, float dcz);
     void lookAt();
-    void updateProjectMatrix(float mnear, float mfar, float top, float right);
 
+    //updators
+    void updateProjectMatrix(float mnear, float mfar, float top, float right);
     void updateViewPort(float width,float height);
+    void updateMaterial(float ka, float kd, float ks, float n, uint32_t Color);
+    void updateLighting(
+        LightType light1Type, glm::vec3 light1Position, glm::vec3 light1Direction, glm::vec3 light1Intensity,
+        LightType light2Type, bool light2Enable,  glm::vec3 light2Position, glm::vec3 light2Direction,
+        glm::vec3 light2Intensity, glm::vec3 ambientIntensity);
 
     //rasterize and render
     void rasterize();

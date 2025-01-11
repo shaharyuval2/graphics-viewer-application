@@ -24,6 +24,7 @@ MeshModel::MeshModel(std::wstring filename, float width, float height, const Cam
     this->lighting = lighting;
     this->shading = shading;
 
+
     //initialize viewport matrix
     targetAspect = width / height;
     updateViewPort(width, height);
@@ -206,6 +207,7 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFacto
     glm::mat4 untilWorldMatrix = worldMatrix * objectMatrix;
 
 
+    almostClipVertices.clear();
     almostClipVertices.reserve(meshData.m_points.size());
     std::vector<glm::vec2> finalScreenPoints;
     finalScreenPoints.reserve(meshData.m_points.size());
@@ -226,7 +228,8 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFacto
         finalScreenCoordinates.push_back(glm::vec2(v4.x, v4.y));
     }
 
-    almostClipNormals.reserve(movedNormals.size());
+    almostClipNormals.clear();
+    almostClipNormals.reserve(meshData.m_points.size());
     std::vector<glm::vec2> finalScreenNormals;
     finalScreenNormals.reserve(movedNormals.size());
 
@@ -425,7 +428,33 @@ void MeshModel::updateViewPort(float width, float height) {
     );
 }
 
+void MeshModel::updateMaterial(float ka, float kd, float ks, float n, uint32_t Color) {
+    material.setKa(ka);
+    material.setKd(kd);
+    material.setKs(ks);
+    material.setShininess(n);
+    material.setColor(Color);
+}
+
+void MeshModel::updateLighting(
+    LightType light1Type, glm::vec3 light1Position, glm::vec3 light1Direction, glm::vec3 light1Intensity,
+    LightType light2Type, bool light2Enable, glm::vec3 light2Position, glm::vec3 light2Direction,
+    glm::vec3 light2Intensity, glm::vec3 ambientIntensity) {
+
+    lighting.light1.setType(light1Type);
+    lighting.light1.setPosition(light1Position);
+    lighting.light1.setDirection(light1Direction);
+    lighting.light1.setIntensity(light1Intensity);
+
+    lighting.light2.setType(light2Type);
+    lighting.light2.setEnabled(light2Enable);
+    lighting.light2.setPosition(light2Position);
+    lighting.light2.setDirection(light2Direction);
+    lighting.light2.setIntensity(light2Intensity);
+
+    lighting.setAmbientIntensity(ambientIntensity);
+}
 
 void MeshModel::rasterize() {
-    shading.rasterize(almostClipVertices, almostClipNormals, meshData.m_faces, lighting.ambientIntensity, material.color,material.K.z, material.n, width, height);
+    shading.rasterize(almostClipVertices, almostClipNormals, meshData.m_faces, lighting, material, width, height);
 }

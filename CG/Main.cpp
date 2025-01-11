@@ -332,6 +332,11 @@ void drawScene()
 {
 	if (myMesh) { // Check if a model is loaded
 		myMesh->updateProjectMatrix(frustum_near, frustum_far, frustum_top, frustum_right);
+		myMesh->updateMaterial(ka,kd,ks,n, materialColor);
+		myMesh->updateLighting(
+			light1Type, light1Position, light1Direction, light1Intensity,
+			light2Type, light2Enabled, light2Position, light2Direction, light2Intensity,
+			ambientLightIntensity);
 		auto result = myMesh->ProjectToScreen(normalFactor);
 		std::vector<glm::vec2> screenPoints = result[0];
 		std::vector<glm::vec2> screenCoordinates = result[1];

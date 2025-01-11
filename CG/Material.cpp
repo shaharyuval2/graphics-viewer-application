@@ -14,9 +14,9 @@ Material::Material(float ka, float kd, float ks, float n, uint32_t Color) {
 
 glm::vec3 Material::ConvertUint32toVector(uint32_t uint_color) {
 	// Extract the Red, Green, and Blue components from the 32-bit color value
-    float r = ((uint_color >> 16) & 0xFF) / 255.0f; // Red component
+    float r = (uint_color & 0xFF) / 255.0f; // Red component
     float g = ((uint_color >> 8) & 0xFF) / 255.0f;  // Green component
-    float b = (uint_color & 0xFF) / 255.0f;         // Blue component
+    float b = ((uint_color >> 16) & 0xFF) / 255.0f;         // Blue component
 
     return glm::vec3(r, g, b); // Return the normalized RGB vector
 }

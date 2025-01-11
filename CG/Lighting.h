@@ -15,6 +15,8 @@ public:
     // Print function
     void printLightingParameters() const;
 
+    void applyWorldTransformationToLights(const glm::mat4& worldTransformationMatrix);
+
     Light light1;                   // First light source
     Light light2;                   // Second light source
     glm::vec3 ambientIntensity;    // Global ambient light intensity

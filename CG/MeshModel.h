@@ -51,6 +51,9 @@ private:
     std::vector<glm::vec4> almostClipVertices;
     std::vector<glm::vec4> almostClipNormals;
 
+    std::vector<glm::vec4> worldSpaceVertices;
+    std::vector<glm::vec4> worldSpaceNormals;
+
     glm::mat4 totalMatrix;
 
     //HW3
@@ -92,6 +95,7 @@ public:
         LightType light1Type, glm::vec3 light1Position, glm::vec3 light1Direction, glm::vec3 light1Intensity,
         LightType light2Type, bool light2Enable,  glm::vec3 light2Position, glm::vec3 light2Direction,
         glm::vec3 light2Intensity, glm::vec3 ambientIntensity);
+    void updateShading(ZBufferMode zMode, ShadingMode shadingMode);
 
     //rasterize and render
     void rasterize();

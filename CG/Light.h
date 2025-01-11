@@ -33,6 +33,20 @@ public:
         std::cout << "  Direction: (" << direction.x << ", " << direction.y << ", " << direction.z << ")" << std::endl;
         std::cout << "  Intensity: (" << intensity.r << ", " << intensity.g << ", " << intensity.b << ")" << std::endl;
     }
+
+    void transformLightSource(const glm::mat4& worldTransformationMatrix) {
+        if (type == POINTY) {
+            // Transform position for point light
+            glm::vec4 transformedPos = worldTransformationMatrix * glm::vec4(position, 1.0f);
+            position = glm::vec3(transformedPos); // Drop the w component
+        }
+        else if (type == DIRECTIONAL) {
+            // Transform direction for directional light (ignore translation)
+            glm::mat3 rotationMatrix = glm::mat3(worldTransformationMatrix); // Extract upper-left 3x3 for rotation
+            glm::vec3 transformedDir = glm::normalize(rotationMatrix * direction);
+            direction = transformedDir; // Update the direction
+        }
+    }
         
 
     // Light properties

@@ -33,3 +33,8 @@ void Lighting::printLightingParameters() const {
         << ambientIntensity.g << ", "
         << ambientIntensity.b << ")\n";
 }
+
+void Lighting::applyWorldTransformationToLights(const glm::mat4& worldTransformationMatrix) {
+    light1.transformLightSource(worldTransformationMatrix);
+    light2.transformLightSource(worldTransformationMatrix);
+}

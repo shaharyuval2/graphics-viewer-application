@@ -17,6 +17,10 @@ public:
     glm::mat4 getViewMatrix() const;
     glm::mat4 getProjectionMatrix() const;
 
+    // Getters for near and far planes
+    float getNearPlane() const { return nearPlane; }
+    float getFarPlane() const { return farPlane; }
+
     //helper function
     glm::vec3 nonhomogenous(glm::vec4 homoV);
 

@@ -203,12 +203,16 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFacto
     viewMatrix = camera.getViewMatrix();
     projectionMatrix = camera.getProjectionMatrix();
 
+    lighting.applyWorldTransformationToLights(worldMatrix);
+
     totalMatrix = projectionMatrix * (viewMatrix * (worldMatrix * objectMatrix));
     glm::mat4 untilWorldMatrix = worldMatrix * objectMatrix;
 
 
     almostClipVertices.clear();
     almostClipVertices.reserve(meshData.m_points.size());
+    worldSpaceVertices.clear();
+    worldSpaceVertices.reserve(meshData.m_points.size());
     std::vector<glm::vec2> finalScreenPoints;
     finalScreenPoints.reserve(meshData.m_points.size());
     for (auto& vec : meshData.m_points) {
@@ -218,6 +222,10 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFacto
         v4 /= v4.w;
         v4 = viewportMatrix * v4;
         finalScreenPoints.push_back(glm::vec2(v4.x, v4.y));
+
+        //world space
+        v4 = untilWorldMatrix * vec;
+        worldSpaceVertices.push_back(v4);
     }
 
     std::vector<glm::vec2> finalScreenCoordinates;
@@ -230,6 +238,8 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFacto
 
     almostClipNormals.clear();
     almostClipNormals.reserve(meshData.m_points.size());
+    worldSpaceNormals.clear();
+    worldSpaceNormals.reserve(meshData.m_points.size());
     std::vector<glm::vec2> finalScreenNormals;
     finalScreenNormals.reserve(movedNormals.size());
 
@@ -246,6 +256,15 @@ std::vector<std::vector<glm::vec2>> MeshModel::ProjectToScreen(float normalFacto
         v4 /= v4.w;
         v4 = viewportMatrix * v4;
         finalScreenNormals.push_back(glm::vec2(v4.x, v4.y));
+
+        //world space
+        glm::vec4 transformedWorldMovedNormal = untilWorldMatrix * movedNormals[i];
+        glm::vec4 worldVertex = worldSpaceVertices[i];
+        glm::vec4 worldNormal = transformedWorldMovedNormal - worldVertex;
+        worldNormal = glm::vec4(glm::normalize(glm::vec3(worldNormal)), 0.0f); // Ensure w = 0 for directional vectors
+
+        // Save the result in almostClipNormals
+        worldSpaceNormals.push_back(worldNormal);
     }
 
     std::vector<glm::vec2> finalScreenBB;
@@ -455,6 +474,11 @@ void MeshModel::updateLighting(
     lighting.setAmbientIntensity(ambientIntensity);
 }
 
+void MeshModel::updateShading(ZBufferMode zMode, ShadingMode shadingMode) {
+    shading.setZBufferMode(zMode);
+    shading.setShadingMode(shadingMode);
+}
+
 void MeshModel::rasterize() {
-    shading.rasterize(almostClipVertices, almostClipNormals, meshData.m_faces, lighting, material, width, height);
+    shading.rasterize(camera, viewportMatrix, worldSpaceVertices, worldSpaceNormals, almostClipVertices, almostClipNormals, meshData.m_faces, lighting, material, width, height);
 }

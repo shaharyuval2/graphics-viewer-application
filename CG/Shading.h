@@ -42,6 +42,20 @@ public:
         int screenWidth,                                    // Screen width in pixels
         int screenHeight                                    // Screen height in pixels
     );
+    
+
+    glm::vec3 reflect(const glm::vec3& lightDir, const glm::vec3& normal);
+
+    glm::vec3 computeLighting(
+        const glm::vec3& position,
+        const glm::vec3& normal,
+        const Lighting& lighting, Material material,
+        const glm::vec3& light1Dir,
+        const glm::vec3& light1Pos,
+        const glm::vec3& light2Dir,
+        const glm::vec3& light2Pos,
+        float dampingFactor,
+        float light2enabled);
 
     double restoreZ(double fz, float nearPlane, float farPlane);
 

@@ -21,6 +21,8 @@ public:
     float getNearPlane() const { return nearPlane; }
     float getFarPlane() const { return farPlane; }
 
+    glm::vec3 getPosition() const { return position; }
+
     //helper function
     glm::vec3 nonhomogenous(glm::vec4 homoV);
 

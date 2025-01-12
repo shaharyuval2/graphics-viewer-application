@@ -79,6 +79,7 @@ glm::vec3 ambientLightIntensity(1.0f, 1.0f, 1.0f); // Global ambient light inten
 //shading properties
 ZBufferMode currentZBufferMode = ZBUFFER_MODE_1;
 ShadingMode currentShadingMode = PHONG;
+SidedMode currentSidedMode = ONE_SIDED;
 
 
 
@@ -236,6 +237,7 @@ int main(int argc, char* argv[])
 	TwDefine(" TweakBar/'Light Sources' opened=false "); // light Attributes folder
 
 	//shading
+	//Z Buffer Modes
 	const TwEnumVal zBufferModes[] = {
 		{ ZBUFFER_MODE_1, "Nonlinear Interpolation (f(z))" },
 		{ ZBUFFER_MODE_2, "Invert f(z) Per Pixel" },
@@ -253,6 +255,14 @@ int main(int argc, char* argv[])
 	};
 	TwType shadingModeType = TwDefineEnum("ShadingModeType", shadingModes, 4);
 	TwAddVarRW(bar, "Shading Mode", shadingModeType, &currentShadingMode, " label='Shading Mode' group='Shading' " " help='Select the shading mode for rendering.' ");
+
+	//Sided Modes
+	const TwEnumVal SidedModes[] = {
+		{ ONE_SIDED, "One Sided" },
+		{ DOUBLE_SIDED, "Double Sided" },
+	};
+	TwType sidedModeType = TwDefineEnum("SidedModeType", SidedModes, 2);
+	TwAddVarRW(bar, "Sided Mode", sidedModeType, &currentSidedMode, " label='Sided Mode' group='Shading' " " help='Select the sided mode for rendering (One Sided or Double Sided).' ");
 	TwDefine(" TweakBar/'Shading' opened=false ");
 
 	//color
@@ -291,7 +301,7 @@ void TW_CALL loadOBJModel(void* data)
 	Light light1 = Light(light1Type, 1, light1Position, light1Direction, light1Intensity);
 	Light light2 = Light(light2Type, light2Enabled, light2Position, light2Direction, light2Intensity);
 	Lighting sceneLighting = Lighting(light1, light2, ambientLightIntensity);
-	Shading sceneShading = Shading(currentZBufferMode, currentShadingMode);
+	Shading sceneShading = Shading(currentZBufferMode, currentShadingMode, currentSidedMode);
 
 	myMesh = new MeshModel(str, width, height, camera, material, sceneLighting, sceneShading);
 }
@@ -337,7 +347,7 @@ void drawScene()
 			light1Type, light1Position, light1Direction, light1Intensity,
 			light2Type, light2Enabled, light2Position, light2Direction, light2Intensity,
 			ambientLightIntensity);
-		myMesh->updateShading(currentZBufferMode, currentShadingMode);
+		myMesh->updateShading(currentZBufferMode, currentShadingMode, currentSidedMode);
 		auto result = myMesh->ProjectToScreen(normalFactor);
 		std::vector<glm::vec2> screenPoints = result[0];
 		std::vector<glm::vec2> screenCoordinates = result[1];

@@ -474,9 +474,10 @@ void MeshModel::updateLighting(
     lighting.setAmbientIntensity(ambientIntensity);
 }
 
-void MeshModel::updateShading(ZBufferMode zMode, ShadingMode shadingMode) {
+void MeshModel::updateShading(ZBufferMode zMode, ShadingMode shadingMode, SidedMode SideMode) {
     shading.setZBufferMode(zMode);
     shading.setShadingMode(shadingMode);
+    shading.setSidedMode(SideMode);
 }
 
 void MeshModel::rasterize() {

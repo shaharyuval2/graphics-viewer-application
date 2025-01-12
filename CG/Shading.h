@@ -15,6 +15,7 @@
 // Enumerations for Z-Buffer Modes and Shading Modes
 enum ZBufferMode { ZBUFFER_MODE_1, ZBUFFER_MODE_2, ZBUFFER_MODE_3 };
 enum ShadingMode { WIREFRAME, FLAT, GOURAUD, PHONG };
+enum SidedMode {ONE_SIDED, DOUBLE_SIDED};
 
 // Shading Class Declaration
 class Shading {
@@ -22,11 +23,12 @@ public:
     // Constructor
     Shading();
 
-    Shading(ZBufferMode ZMode, ShadingMode ShadingMode);
+    Shading(ZBufferMode ZMode, ShadingMode ShadingMode, SidedMode SideMode);
 
     // Setters
     void setZBufferMode(ZBufferMode mode);
     void setShadingMode(ShadingMode mode);
+    void setSidedMode(SidedMode mode);
 
     //resterier
     void rasterize(
@@ -45,6 +47,7 @@ public:
     
 
     glm::vec3 reflect(const glm::vec3& lightDir, const glm::vec3& normal);
+    bool isTriangleOutsideFrustum(const glm::vec4& v0, const glm::vec4& v1, const glm::vec4& v2);
 
     glm::vec3 computeLighting(
         const glm::vec3& position,
@@ -65,6 +68,7 @@ public:
 private:
     ZBufferMode currentZBufferMode;
     ShadingMode currentShadingMode;
+    SidedMode currentSidedMode;
 };
 
 #endif // SHADING_H#pragma once 

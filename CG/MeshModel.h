@@ -95,7 +95,7 @@ public:
         LightType light1Type, glm::vec3 light1Position, glm::vec3 light1Direction, glm::vec3 light1Intensity,
         LightType light2Type, bool light2Enable,  glm::vec3 light2Position, glm::vec3 light2Direction,
         glm::vec3 light2Intensity, glm::vec3 ambientIntensity);
-    void updateShading(ZBufferMode zMode, ShadingMode shadingMode);
+    void updateShading(ZBufferMode zMode, ShadingMode shadingMode, SidedMode SideMode);
 
     //rasterize and render
     void rasterize();

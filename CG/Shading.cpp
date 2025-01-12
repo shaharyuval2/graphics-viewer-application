@@ -229,17 +229,10 @@ void Shading::rasterize(
         glm::vec3 n2 = glm::normalize(glm::vec3(worldNormals[face.v[2]]));
 
         // Compute face normal for one-sided and double-sided checks
-        //bool flipNormals;
         glm::vec3 faceNormal = glm::normalize(glm::cross(worldP1 - worldP0, worldP2 - worldP0));
 
         // Check if face should be culled (one-sided mode)
-        if (currentSidedMode == ONE_SIDED) {
-            glm::vec3 viewDir = glm::normalize(camera.getPosition() - worldP0); // Camera position in world space
-            if (glm::dot(faceNormal, viewDir) <= 0.0f) {
-                //continue; // Cull the back face
-            }
-        }
-        else if (currentSidedMode == DOUBLE_SIDED) {
+        if (currentSidedMode == DOUBLE_SIDED) {
             glm::vec3 viewDir = glm::normalize(camera.getPosition() - worldP0); // Camera position in world space
             if (glm::dot(faceNormal, viewDir) < 0.0f) {
                 // Flip the normal for back-facing triangles
@@ -360,6 +353,15 @@ glm::vec3 Shading::computeLighting(const glm::vec3& position, const glm::vec3& n
     // Ambient light contribution
     glm::vec3 ambientLightColor = material.K.x * lighting.ambientIntensity * material.color;
 
+    // Check if the surface is back-facing
+    glm::vec3 viewDir = glm::normalize(-position); // Assuming the camera is at (0, 0, 0)
+    bool isBackFacing = glm::dot(normal, viewDir) < 0;
+
+    if (currentSidedMode == ONE_SIDED && isBackFacing) {
+        // For one-sided mode, return ambient light only for back faces
+        return ambientLightColor;
+    }
+
     // Light 1 (Directional or Point)
     glm::vec3 diffuseLightColor1(0.0f);
     glm::vec3 specularLightColor1(0.0f);
@@ -369,8 +371,8 @@ glm::vec3 Shading::computeLighting(const glm::vec3& position, const glm::vec3& n
         float diffuseIntensity = std::max(0.0f, glm::dot(normal, lightDir));
         diffuseLightColor1 = material.K.y * diffuseIntensity * lighting.light1.intensity * material.color;
 
-        glm::vec3 reflectDir = glm::reflect(-lightDir, normal);
-        float specularIntensity = std::pow(std::max(glm::dot(glm::normalize(-position), reflectDir), 0.0f), material.n);
+        glm::vec3 reflectDir = reflect(-lightDir, normal);
+        float specularIntensity = std::pow(std::max(glm::dot(viewDir, reflectDir), 0.0f), material.n);
         specularLightColor1 = material.K.z * specularIntensity * glm::vec3(1.0f);
     }
     else if (lighting.light1.type == POINTY) {
@@ -378,8 +380,8 @@ glm::vec3 Shading::computeLighting(const glm::vec3& position, const glm::vec3& n
         float diffuseIntensity = std::max(0.0f, glm::dot(normal, lightDir));
         diffuseLightColor1 = material.K.y * diffuseIntensity * lighting.light1.intensity * material.color;
 
-        glm::vec3 reflectDir = glm::reflect(-lightDir, normal);
-        float specularIntensity = std::pow(std::max(glm::dot(glm::normalize(-position), reflectDir), 0.0f), material.n);
+        glm::vec3 reflectDir = reflect(-lightDir, normal);
+        float specularIntensity = std::pow(std::max(glm::dot(viewDir, reflectDir), 0.0f), material.n);
         specularLightColor1 = material.K.z * specularIntensity * glm::vec3(1.0f);
     }
 
@@ -393,8 +395,8 @@ glm::vec3 Shading::computeLighting(const glm::vec3& position, const glm::vec3& n
             float diffuseIntensity = std::max(0.0f, glm::dot(normal, lightDir));
             diffuseLightColor2 = material.K.y * diffuseIntensity * lighting.light2.intensity * material.color;
 
-            glm::vec3 reflectDir = glm::reflect(-lightDir, normal);
-            float specularIntensity = std::pow(std::max(glm::dot(glm::normalize(-position), reflectDir), 0.0f), material.n);
+            glm::vec3 reflectDir = reflect(-lightDir, normal);
+            float specularIntensity = std::pow(std::max(glm::dot(viewDir, reflectDir), 0.0f), material.n);
             specularLightColor2 = material.K.z * specularIntensity * glm::vec3(1.0f);
         }
         else if (lighting.light2.type == POINTY) {
@@ -402,8 +404,8 @@ glm::vec3 Shading::computeLighting(const glm::vec3& position, const glm::vec3& n
             float diffuseIntensity = std::max(0.0f, glm::dot(normal, lightDir));
             diffuseLightColor2 = material.K.y * diffuseIntensity * lighting.light2.intensity * material.color;
 
-            glm::vec3 reflectDir = glm::reflect(-lightDir, normal);
-            float specularIntensity = std::pow(std::max(glm::dot(glm::normalize(-position), reflectDir), 0.0f), material.n);
+            glm::vec3 reflectDir = reflect(-lightDir, normal);
+            float specularIntensity = std::pow(std::max(glm::dot(viewDir, reflectDir), 0.0f), material.n);
             specularLightColor2 = material.K.z * specularIntensity * glm::vec3(1.0f);
         }
     }
@@ -412,6 +414,7 @@ glm::vec3 Shading::computeLighting(const glm::vec3& position, const glm::vec3& n
     return ambientLightColor + dampingFactor * (diffuseLightColor1 + specularLightColor1 +
         light2enabled * (diffuseLightColor2 + specularLightColor2));
 }
+
 
 bool Shading::isTriangleOutsideFrustum(const glm::vec4& v0, const glm::vec4& v1, const glm::vec4& v2) {
     // Check each vertex against all 6 clipping planes (left, right, top, bottom, near, far)

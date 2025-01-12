@@ -441,10 +441,6 @@ void Shading::rasterize2(
                             color = computeLighting(fragmentPos, interpolatedNormal, lighting, material,
                             light1Dir, light1Pos, light2Dir, light2Pos, dampingFactor, light2enabled);
                             
-                            /*
-                            color = ambientLightColor + dampingFactor * (diffuseLightColor1 + specularLightColor1
-                                + light2enabled * (diffuseLightColor2 + specularLightColor2));
-                            */
                         }
                         
 
@@ -468,6 +464,7 @@ void Shading::rasterize2(
     // Deallocate Z-buffer
     delete[] zBuffer;
 }
+*/
 
 double Shading::restoreZ(double fz, float nearPlane, float farPlane) {
     double A = farPlane - nearPlane;
@@ -476,7 +473,7 @@ double Shading::restoreZ(double fz, float nearPlane, float farPlane) {
 
     return - C / (fz * A - B);
 }
-*/
+
 
 /*
 void Shading::rasterize(

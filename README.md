@@ -1,5 +1,9 @@
-<details>
-  <summary>📄 <b>Click to View Document</b></summary>
-  <br>
-  <a href="./hw3-demonstration paper.pdf" target="_blank">👉 Open the viewable PDF here</a>
-</details>
+<img width="602" height="804" alt="image" src="https://github.com/user-attachments/assets/4717784d-fabb-494b-9df7-cbadf63b3bb6" />
+<img width="604" height="846" alt="image" src="https://github.com/user-attachments/assets/622a1529-13bb-4ec2-8a04-c0fe36aae17e" />
+<img width="602" height="851" alt="image" src="https://github.com/user-attachments/assets/2fd23b1f-b508-45fb-92fa-4a6dfdd69b8c" />
+<img width="604" height="855" alt="image" src="https://github.com/user-attachments/assets/4383021f-82e6-42eb-b041-82d8a616a6cd" />
+<img width="606" height="837" alt="image" src="https://github.com/user-attachments/assets/2e072027-d449-4fb3-b638-4a3130756314" />
+<img width="603" height="810" alt="image" src="https://github.com/user-attachments/assets/b9c20df3-8b6b-4188-a2f6-211afcf1980c" />
+<img width="605" height="856" alt="image" src="https://github.com/user-attachments/assets/82940d8c-9d61-493f-b0a7-ed9041c03f57" />
+<img width="603" height="858" alt="image" src="https://github.com/user-attachments/assets/5067f182-ea0c-4e91-8bc7-0ac33787ca0a" />
+<img width="605" height="858" alt="image" src="https://github.com/user-attachments/assets/e61d1f8a-0839-49a5-846a-e5f32704ede1" />
